@@ -29,7 +29,8 @@
     "react-native-status-bar-height": "^2.6.0",
     "expo-auth-session": "~5.0.2",
     "expo-random": "~13.2.0",
-    "expo-splash-screen": "~0.20.5"
+    "expo-splash-screen": "~0.20.5",
+    "expo-location": "~16.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
