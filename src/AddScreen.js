@@ -1,8 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { View, Image, Button, StyleSheet, Text, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { initializeApp } from 'firebase/app';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+import * as url from "url";
 
 const firebaseConfig = {
     apiKey: "AIzaSyD7jlUzKiSs6oLOMptBnweP8XhrOuiUyZ8",
@@ -34,6 +37,95 @@ export default function ImageUploadScreen() {
         })();
     }, []);
 
+    const uploadToFastAPI = async (imageFile) => {
+        const imageLink = imageFile.uri
+        const encodedImageLink = encodeURIComponent(imageLink);
+        const apiUrl = `http://localhost:8000/detect?image_link=${encodedImageLink}`;
+
+        try {
+            const response = await fetch('http://localhost:8000/detect?image_link=' +encodedImageLink, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ image_link: imageLink }),
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to send image link to server');
+            }
+
+            const result = await response.json();
+            console.log('Server response:', result);
+            // Handle the response from the server here
+          } catch (error) {
+            console.error('Error sending image link to server:', error.message);
+            // Handle errors here
+          }
+
+    };
+
+    const selectImageFile = async (url) => {
+        console.log("selectImageFile")
+        console.log(url)
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.cancelled) {
+        const localUri = result.uri;
+        const filename = localUri.split('/').pop(); // ì´ë¯¸ì§€ íŒŒì¼ëª… ê°€ì ¸ì˜¤ê¸°
+        const match = /\.(\w+)$/.exec(filename); // í™•ìž¥ìž ê°€ì ¸ì˜¤ê¸°
+        const type = match ? `image/${match[1]}` : `image`;
+
+        // ì´ë¯¸ì§€ íŒŒì¼ ê°ì²´ ìƒì„±
+        const imageFile = {
+          uri: url,
+          type: type,
+          name: filename,
+        };
+
+        // ì—…ë¡œë“œ í•¨ìˆ˜ í˜¸ì¶œ
+        uploadToFastAPI(imageFile);
+      }
+    };
+
+    const uploadImage = async () => {
+
+      try {
+        if (!selectedImage) {
+          console.error('Please select an image first');
+          return;
+        }
+        // Upload image to Firebase Storage
+        const response = await fetch(selectedImage);
+        const blob = await response.blob();
+
+        const storageRef = ref(storage, `Cloth/${Date.now()}.jpg`);
+        const uploadTask = uploadBytes(storageRef, blob);
+
+        uploadTask.then(async () => {
+              // Introduce a delay (e.g., using setTimeout) before getting the download URL
+              setTimeout(async () => {
+                const downloadURL = await getDownloadURL(storageRef);
+                console.log('Image uploaded successfully to Firebase! Download URL:', downloadURL);
+
+                selectImageFile(downloadURL);
+                // After uploading to Firebase, sen
+              }, 1500);// 1.5 seconds delay (adjust as needed)
+
+            }).catch((error) => {
+              console.error('Error uploading image to Firebase:', error);
+            });
+      } catch (error) {
+        console.error('Error preparing image for upload to Firebase:', error);
+      }
+    };
+
+
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -47,7 +139,7 @@ export default function ImageUploadScreen() {
         }
     };
 
-    const quality = Platform.OS === 'ios' ? 0.2 : 1.0; // iOS¿¡¼­´Â 0.2, Android¿¡¼­´Â 1.0
+    const quality = Platform.OS === 'ios' ? 0.2 : 1.0; // iOSï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 0.2, Androidï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 1.0
 
 
     const takePicture = async () => {
@@ -65,41 +157,6 @@ export default function ImageUploadScreen() {
             }
         } catch (error) {
             console.error('Error taking picture:', error);
-        }
-    };
-
-    const uploadImage = async () => {
-        try {
-            if (!selectedImage) {
-                console.error('Please select an image first');
-                return;
-            }
-
-            const response = await fetch(selectedImage);
-            const blob = await response.blob();
-
-            const storageRef = ref(storage, `Cloth/${Date.now()}.jpg`);
-            const uploadTask = uploadBytes(storageRef, blob);
-
-            uploadTask.then(() => {
-                // Introduce a delay (e.g., using setTimeout) before getting the download URL
-                setTimeout(async () => {
-                    const downloadURL = await getDownloadURL(storageRef);
-                    console.log('Image uploaded successfully! Download URL:', downloadURL);
-                }, 2000); // 2 seconds delay (adjust as needed)
-            }).catch((error) => {
-                console.error('Error uploading image:', error);
-            });
-
-            // Wait for the upload to complete and get the download URL
-            const downloadURL = await getDownloadURL(storageRef);
-
-            // »çÁø Ãß°¡ Á¤º¸ ÀÔ·Â -> º°Á¡, Æò°¡
-
-
-            console.log('Image uploaded successfully! Download URL:', downloadURL);
-        } catch (error) {
-            console.error('Error preparing image for upload:', error);
         }
     };
 

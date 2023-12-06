@@ -11,6 +11,7 @@ import {
     Dashboard,
 } from './src'
 import BottomTabNavigator from './src/BottomTabNavigator';
+import ImageUploadScreen from "./src/AddScreen";
 
 const Stack = createStackNavigator()
 
@@ -24,7 +25,7 @@ export default function App() {
                         headerShown: false,
                     }}
                 >
-                    <Stack.Screen name="StartScreen" component={StartScreen} />
+                    <Stack.Screen name="StartScreen" component={ImageUploadScreen} />
                     <Stack.Screen name="LoginScreen" component={LoginScreen} />
                     <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
                     {/* Integrate BottomTabNavigator as a screen */}
