@@ -4,7 +4,6 @@ import * as Location from 'expo-location';
 
 const API_KEY = 'd5d622b87e057c9805f232ce7a7f8eea';
 
-
 const CalendarScreen = () => {
     const [weatherData, setWeatherData] = useState(null);
     const [location, setLocation] = useState(null);
