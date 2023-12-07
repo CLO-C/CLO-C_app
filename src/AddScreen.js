@@ -51,6 +51,37 @@ export default function ImageUploadScreen() {
     const [comfortFeedback, setComfortFeedback] = useState(null);
     const [uploading, setUploading] = useState(false);
 
+    const uploadToFastAPI = async (imageLink) => {
+        console.log("UploadToFastAPI")
+        console.log("Link:", imageLink)
+        const encodedImageLink = encodeURIComponent(imageLink);
+        const apiUrl = `http://localhost:8000/detect?image_link=${encodedImageLink}`;
+
+        try {
+            const response = await fetch('http://localhost:8000/detect?image_link=' +encodedImageLink, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ image_link: imageLink }),
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to send image link to server');
+            }
+
+            const result = await response.json();
+            console.log('Server response:', result);
+            // Handle the response from the server here
+          } catch (error) {
+            console.error('Error sending image link to server:', error.message);
+            // Handle errors here
+          }
+
+    };
+
+
+
     useEffect(() => {
         (async () => {
             if (Platform.OS !== 'web') {
@@ -122,13 +153,22 @@ export default function ImageUploadScreen() {
             const storageRef = ref(storage, `Cloth/${Date.now()}.jpg`);
             const uploadTask = uploadBytes(storageRef, blob);
 
-            await uploadTask;
+            await uploadTask.then(async () => {
+              // Introduce a delay (e.g., using setTimeout) before getting the download URL
+              const downloadURL = await getDownloadURL(storageRef);
+              console.log('Image uploaded successfully to Firebase! Download URL:', downloadURL);
+
+            }).catch((error) => {
+              console.error('Error uploading image to Firebase:', error);
+            });
 
             const downloadURL = await getDownloadURL(storageRef);
 
             console.log('Image uploaded successfully! Download URL:', downloadURL);
             console.log('Temperature Feedback:', temperatureFeedback);
             console.log('Comfort Feedback:', comfortFeedback);
+
+            uploadToFastAPI(downloadURL);
 
             const feedbackDocRef = await addDoc(collection(firestore, 'feedback'), {
                 timestamp: new Date(),
