@@ -1,11 +1,23 @@
-
 import React, { useState, useEffect } from 'react';
-import { View, Image, Button, StyleSheet, Text, Platform } from 'react-native';
+import {
+    View,
+    Image,
+    Button,
+    StyleSheet,
+    Text,
+    Platform,
+    TouchableOpacity,
+    Alert,
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { initializeApp } from 'firebase/app';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-
-import * as url from "url";
+import {
+    getStorage,
+    ref,
+    uploadBytes,
+    getDownloadURL,
+} from 'firebase/storage';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD7jlUzKiSs6oLOMptBnweP8XhrOuiUyZ8",
@@ -20,25 +32,28 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
+const firestore = getFirestore(app);
+
+const TEMPERATURE_VALUES = {
+    COLD: 'cold',
+    MODERATE: 'moderate',
+    HOT: 'hot',
+};
+
+const COMFORT_VALUES = {
+    UNCOMFORTABLE: 'uncomfortable',
+    COMFORTABLE: 'comfortable',
+};
 
 export default function ImageUploadScreen() {
     const [selectedImage, setSelectedImage] = useState(null);
+    const [temperatureFeedback, setTemperatureFeedback] = useState(null);
+    const [comfortFeedback, setComfortFeedback] = useState(null);
+    const [uploading, setUploading] = useState(false);
 
-    useEffect(() => {
-        (async () => {
-            if (Platform.OS !== 'web') {
-                const cameraStatus = await ImagePicker.requestCameraPermissionsAsync();
-                const mediaLibraryStatus = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-                if (cameraStatus.status !== 'granted' || mediaLibraryStatus.status !== 'granted') {
-                    alert('Permission to access camera and media library is required!');
-                }
-            }
-        })();
-    }, []);
-
-    const uploadToFastAPI = async (imageFile) => {
-        const imageLink = imageFile.uri
+    const uploadToFastAPI = async (imageLink) => {
+        console.log("UploadToFastAPI")
+        console.log("Link:", imageLink)
         const encodedImageLink = encodeURIComponent(imageLink);
         const apiUrl = `http://localhost:8000/detect?image_link=${encodedImageLink}`;
 
@@ -65,67 +80,23 @@ export default function ImageUploadScreen() {
 
     };
 
-    const selectImageFile = async (url) => {
-        console.log("selectImageFile")
-        console.log(url)
-      let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-
-      if (!result.cancelled) {
-        const localUri = result.uri;
-        const filename = localUri.split('/').pop(); // 이미지 파일명 가져오기
-        const match = /\.(\w+)$/.exec(filename); // 확장자 가져오기
-        const type = match ? `image/${match[1]}` : `image`;
-
-        // 이미지 파일 객체 생성
-        const imageFile = {
-          uri: url,
-          type: type,
-          name: filename,
-        };
-
-        // 업로드 함수 호출
-        uploadToFastAPI(imageFile);
-      }
-    };
-
-    const uploadImage = async () => {
-
-      try {
-        if (!selectedImage) {
-          console.error('Please select an image first');
-          return;
-        }
-        // Upload image to Firebase Storage
-        const response = await fetch(selectedImage);
-        const blob = await response.blob();
-
-        const storageRef = ref(storage, `Cloth/${Date.now()}.jpg`);
-        const uploadTask = uploadBytes(storageRef, blob);
-
-        uploadTask.then(async () => {
-              // Introduce a delay (e.g., using setTimeout) before getting the download URL
-              setTimeout(async () => {
-                const downloadURL = await getDownloadURL(storageRef);
-                console.log('Image uploaded successfully to Firebase! Download URL:', downloadURL);
-
-                selectImageFile(downloadURL);
-                // After uploading to Firebase, sen
-              }, 1500);// 1.5 seconds delay (adjust as needed)
-
-            }).catch((error) => {
-              console.error('Error uploading image to Firebase:', error);
-            });
-      } catch (error) {
-        console.error('Error preparing image for upload to Firebase:', error);
-      }
-    };
 
 
+    useEffect(() => {
+        (async () => {
+            if (Platform.OS !== 'web') {
+                const cameraStatus = await ImagePicker.requestCameraPermissionsAsync();
+                const mediaLibraryStatus = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+                if (cameraStatus.status !== 'granted' || mediaLibraryStatus.status !== 'granted') {
+                    alert('Permission to access camera and media library is required!');
+                }
+            }
+        })();
+    }, []);
+
+
+    // ���������� ���� ������
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -139,24 +110,93 @@ export default function ImageUploadScreen() {
         }
     };
 
-    const quality = Platform.OS === 'ios' ? 0.2 : 1.0; // iOS������ 0.2, Android������ 1.0
-
-
+    // ī�޶�� ���
     const takePicture = async () => {
         try {
             let result = await ImagePicker.launchCameraAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
-
                 aspect: [4, 3],
                 quality: 1,
             });
 
-            if (!result.cancelled) {
-                setSelectedImage(result.uri);
+            if (!result.canceled) {
+                setSelectedImage(result.assets[0].uri);
             }
         } catch (error) {
             console.error('Error taking picture:', error);
+        }
+    };
+
+    const handleTemperatureFeedback = (feedback) => {
+        setTemperatureFeedback(feedback);
+    };
+
+    const handleComfortFeedback = (feedback) => {
+        setComfortFeedback(feedback);
+    };
+
+
+    // ���ε� -> ����: ���丮��, ������ ����: ���̾���
+    const uploadImage = async () => {
+        try {
+            if (!selectedImage || !temperatureFeedback || !comfortFeedback) {
+                console.error('Please select an image, provide feedback, and rate the image first');
+                return;
+            }
+
+            setUploading(true);
+
+            const response = await fetch(selectedImage);
+            const blob = await response.blob();
+
+            const storageRef = ref(storage, `Cloth/${Date.now()}.jpg`);
+            const uploadTask = uploadBytes(storageRef, blob);
+
+            await uploadTask.then(async () => {
+              // Introduce a delay (e.g., using setTimeout) before getting the download URL
+              const downloadURL = await getDownloadURL(storageRef);
+              console.log('Image uploaded successfully to Firebase! Download URL:', downloadURL);
+
+            }).catch((error) => {
+              console.error('Error uploading image to Firebase:', error);
+            });
+
+            const downloadURL = await getDownloadURL(storageRef);
+
+            console.log('Image uploaded successfully! Download URL:', downloadURL);
+            console.log('Temperature Feedback:', temperatureFeedback);
+            console.log('Comfort Feedback:', comfortFeedback);
+
+            uploadToFastAPI(downloadURL);
+
+            const feedbackDocRef = await addDoc(collection(firestore, 'feedback'), {
+                timestamp: new Date(),
+                downloadURL,
+                temperatureFeedback,
+                comfortFeedback,
+            });
+
+            console.log('Feedback saved to Firestore with ID:', feedbackDocRef.id);
+
+            setUploading(false);
+
+            Alert.alert(
+                'Success',
+                'Uploaded successfully!',
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => {
+                            console.log('User clicked OK');
+                        },
+                    },
+                ],
+                { cancelable: false }
+            );
+
+        } catch (error) {
+            console.error('Error preparing image for upload:', error);
         }
     };
 
@@ -164,8 +204,46 @@ export default function ImageUploadScreen() {
         <View style={styles.container}>
             <Button title="Take Picture" onPress={takePicture} />
             <Button title="Pick Image from Gallery" onPress={pickImage} />
-            <Button title="Upload Image" onPress={uploadImage} />
             {selectedImage && <Image source={{ uri: selectedImage }} style={styles.image} />}
+
+            <View style={styles.feedbackContainer}>
+                <View style={styles.feedbackRow}>
+                    <TouchableOpacity
+                        style={[styles.feedbackButton, temperatureFeedback === TEMPERATURE_VALUES.COLD && styles.selectedButton]}
+                        onPress={() => handleTemperatureFeedback(TEMPERATURE_VALUES.COLD)}
+                    >
+                        <Text>Cold</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.feedbackButton, temperatureFeedback === TEMPERATURE_VALUES.MODERATE && styles.selectedButton]}
+                        onPress={() => handleTemperatureFeedback(TEMPERATURE_VALUES.MODERATE)}
+                    >
+                        <Text>Moderate</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.feedbackButton, temperatureFeedback === TEMPERATURE_VALUES.HOT && styles.selectedButton]}
+                        onPress={() => handleTemperatureFeedback(TEMPERATURE_VALUES.HOT)}
+                    >
+                        <Text>Hot</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.feedbackRow}>
+                    <TouchableOpacity
+                        style={[styles.feedbackButton, comfortFeedback === COMFORT_VALUES.UNCOMFORTABLE && styles.selectedButton]}
+                        onPress={() => handleComfortFeedback(COMFORT_VALUES.UNCOMFORTABLE)}
+                    >
+                        <Text>Uncomfortable</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.feedbackButton, comfortFeedback === COMFORT_VALUES.COMFORTABLE && styles.selectedButton]}
+                        onPress={() => handleComfortFeedback(COMFORT_VALUES.COMFORTABLE)}
+                    >
+                        <Text>Comfortable</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+            <Button title="Upload" onPress={uploadImage} />
         </View>
     );
 }
@@ -180,5 +258,22 @@ const styles = StyleSheet.create({
         width: 200,
         height: 200,
         marginTop: 20,
+    },
+    feedbackContainer: {
+        marginTop: 20,
+    },
+    feedbackRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: 10,
+    },
+    feedbackButton: {
+        backgroundColor: 'white',
+        padding: 10,
+        borderRadius: 5,
+        marginLeft: 10,
+    },
+    selectedButton: {
+        backgroundColor: 'gray',
     },
 });
