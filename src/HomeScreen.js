@@ -4,7 +4,7 @@ import * as Location from 'expo-location';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, set } from 'firebase/database';
 import Icon from 'react-native-vector-icons/FontAwesome';
-
+import axios from 'axios';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD7jlUzKiSs6oLOMptBnweP8XhrOuiUyZ8",
@@ -32,6 +32,8 @@ const HomeScreen = () => {
         { date: '2023-12-04', image: require('../assets/previous-cloth4.png') },
         { date: '2023-12-05', image: require('../assets/previous-cloth5.png') },
     ]);
+    const [forecastData, setForecastData] = useState([]);
+
     useEffect(() => {
         const fetchLocationAndWeather = async () => {
             try {
@@ -44,6 +46,7 @@ const HomeScreen = () => {
                 const location = await Location.getCurrentPositionAsync({});
                 setLocation(location);
                 fetchWeatherData(location.coords.latitude, location.coords.longitude);
+                fetchWeatherForecast(location.coords.latitude, location.coords.longitude);
             } catch (error) {
                 console.error('Error fetching location:', error);
             }
@@ -71,10 +74,39 @@ const HomeScreen = () => {
             }
         };
 
+        const fetchWeatherForecast = async (latitude, longitude) => {
+            try {
+                const response = await axios.get(
+                    `http://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`
+                );
+
+                const groupedForecastData = groupForecastByDate(response.data.list);
+                setForecastData(groupedForecastData);
+            } catch (error) {
+                console.error('Error fetching weather forecast:', error);
+            }
+        };
+
+        const groupForecastByDate = (forecastList) => {
+            const groupedData = {};
+
+            forecastList.forEach((item) => {
+                const date = item.dt_txt.split(' ')[0];
+
+                if (!groupedData[date]) {
+                    groupedData[date] = [];
+                }
+
+                groupedData[date].push(item);
+            });
+
+            return groupedData;
+        };
+
         fetchLocationAndWeather();
     }, []);
 
-    // ���� ������
+    // 날씨 아이콘
     const getWeatherIcon = (weatherCondition) => {
         switch (weatherCondition) {
             case 'Clear':
@@ -94,7 +126,7 @@ const HomeScreen = () => {
         }
     };
 
-    // ���� ��ȣ
+    // 섭씨 기호
     const DegreeSymbol = () => <Text>&#176;</Text>;
 
     if (!weatherData) {
@@ -105,15 +137,46 @@ const HomeScreen = () => {
         );
     }
 
+    const renderForecastItem = ({ item }) => (
+        <View style={styles.forecastItem}>
+            <Text>{item.dt_txt.split(' ')[1]}</Text>
+            <Image source={{ uri: getWeatherIcon_Forecast(item.weather[0].icon) }} style={styles.weatherIcon} />
+            <Text>{item.main.temp}<DegreeSymbol />C</Text>
+        </View>
+    );
 
-    /////// ���� �ʿ�
-    // ���Ƿ� ������, �Ź� ���� ������
 
+    const renderDayForecast = (date, data) => {
+        // Format the date to MM/DD format
+        const formattedDate = new Date(date).toLocaleDateString('en-US', {
+            month: 'numeric',
+            day: 'numeric',
+        });
+
+        return (
+            <View key={date} style={styles.dayForecast}>
+                <Text style={styles.day}>{formattedDate}</Text>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                >
+                    {data.map((item) => (
+                        <View key={item.dt} style={styles.forecastItem}>
+                            {renderForecastItem({ item })}
+                        </View>
+                    ))}
+                </ScrollView>
+            </View>
+        );
+    };
+
+    const getWeatherIcon_Forecast = (icon) => `http://openweathermap.org/img/wn/${icon}.png`;
+
+    /////// 수정 필요
+    // 임의로 상하의, 신발 사진 지정함
     const topImage = require('../assets/top-image.png'); // Replace with the actual path
     const bottomImage = require('../assets/bottom-image.png'); // Replace with the actual path
     const shoesImage = require('../assets/shoes-image.png'); // Replace with the actual path
-
-
 
     const renderPreviousClothItem = (item, index) => (
         <View key={index} style={styles.previousClothItem}>
@@ -121,7 +184,6 @@ const HomeScreen = () => {
             <Text style={styles.previousClothDate}>{item.date}</Text>
         </View>
     );
-
     return (
         <View style={styles.container}>
             <View>
@@ -149,7 +211,19 @@ const HomeScreen = () => {
                         <Text>Rain: {weatherData.clouds.all}%</Text>
                         <Text>Humidity: {weatherData.main.humidity}%</Text>
                     </View>
+                    {/* 날씨 예보 */}
+                    <View style={styles.forecastContainer}>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                        >
+                            {Object.keys(forecastData).map((date) => (
+                                renderDayForecast(date, forecastData[date])
+                            ))}
+                        </ScrollView>
+                    </View>
                 </View>
+
                 {/* Clothing images */}
                 <View style={styles.clothingContainer}>
                     <Text>Recommended clothes</Text>
@@ -160,7 +234,9 @@ const HomeScreen = () => {
                     </View>
                 </View>
 
-                { /*���� �Ծ��� ��*/}
+
+
+                { /*전에 입었던 옷*/}
                 <View style={styles.previousClothesContainer}>
                     <ScrollView
                         horizontal
@@ -174,14 +250,12 @@ const HomeScreen = () => {
             </View>
         </View>
     );
-
 };
 
 const styles = StyleSheet.create({
-
     container: {
         flex: 1,
-        marginTop: 30,
+        marginTop: 10,
         paddingHorizontal: 20,
     },
     Header: {
@@ -225,7 +299,7 @@ const styles = StyleSheet.create({
     },
     clothingContainer: {
         flexDirection: 'column',
-        marginTop: 20,
+        marginTop: 15,
         borderRadius: 5,
         padding: 10,
         backgroundColor: 'white',
@@ -236,10 +310,33 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     clothingImage: {
-        width: 100,
-        height: 100,
+        width: 90,
+        height: 90,
         resizeMode: 'cover',
         borderRadius: 8,
+        marginRight: 5,
+        marginLeft: 5,
+
+    },
+    forecastContainer: {
+        marginTop: 10,
+    },
+
+    dayForecast: {
+        marginRight: 16,
+    },
+    day: {
+        fontSize: 18,
+        marginBottom: 3,
+    },
+    forecastItem: {
+        marginRight: 16,
+        alignItems: 'center',
+    },
+    weatherIcon: {
+        width: 40,
+        height: 40,
+        resizeMode: 'cover',
     },
     previousClothesScrollView: {
         marginTop: 20,
@@ -248,8 +345,8 @@ const styles = StyleSheet.create({
         marginRight: 10,
     },
     previousClothImage: {
-        width: 170,
-        height: 250,
+        width: 130,
+        height: 190,
         resizeMode: 'cover',
         borderRadius: 8,
     },
