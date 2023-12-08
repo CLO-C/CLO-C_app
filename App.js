@@ -11,7 +11,6 @@ import {
     Dashboard,
 } from './src'
 import BottomTabNavigator from './src/BottomTabNavigator';
-import ImageUploadScreen from "./src/AddScreen";
 
 const Stack = createStackNavigator()
 
