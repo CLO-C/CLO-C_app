@@ -113,7 +113,19 @@ export default function ImageUploadScreen() {
     const uploadImage = async () => {
         try {
             if (!selectedImage || !temperatureFeedback || !comfortFeedback) {
-                console.error('Please select an image, provide feedback, and rate the image first');
+                Alert.alert(
+                    'Error',
+                    'Please select an image, provide feedback, and rate the image first',
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => {
+                                console.log('User clicked OK');
+                            },
+                        },
+                    ],
+                    { cancelable: false }
+                );
                 return;
             }
 
@@ -199,7 +211,15 @@ export default function ImageUploadScreen() {
         <View style={styles.container}>
             <Button title="Take Picture" onPress={takePicture} />
             <Button title="Pick Image from Gallery" onPress={pickImage} />
-            {selectedImage && <Image source={{ uri: selectedImage }} style={styles.image} />}
+            <View style={styles.imageContainer}>
+                {!selectedImage ? (
+                    <Text>Please select an image first</Text>
+                ) : (
+                    <Image source={{ uri: selectedImage }} style={styles.image} />
+                )}
+            </View>
+
+
 
             <View style={styles.feedbackContainer}>
                 <View style={styles.feedbackRow}>
@@ -249,10 +269,18 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    imageContainer: {
+        width: 200, 
+        height: 200, 
+        marginTop: 20,
+        borderWidth: 1,
+        borderColor: 'lightgray',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     image: {
         width: 200,
         height: 200,
-        marginTop: 20,
     },
     feedbackContainer: {
         marginTop: 20,
