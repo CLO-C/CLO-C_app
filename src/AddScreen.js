@@ -54,35 +54,6 @@ export default function ImageUploadScreen() {
     const [comfortFeedback, setComfortFeedback] = useState(null);
     const [uploading, setUploading] = useState(false);
 
-    const uploadToFastAPI = async (imageLink) => {
-        console.log("UploadToFastAPI")
-        console.log("Link:", imageLink)
-        const encodedImageLink = encodeURIComponent(imageLink);
-        const apiUrl = `http://localhost:8000/detect?image_link=${encodedImageLink}`;
-
-        try {
-            const response = await fetch('http://localhost:8000/detect?image_link=' +encodedImageLink, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ image_link: imageLink }),
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to send image link to server');
-            }
-
-            const result = await response.json();
-            console.log('Server response:', result);
-            // Handle the response from the server here
-          } catch (error) {
-            console.error('Error sending image link to server:', error.message);
-            // Handle errors here
-          }
-
-    };
-
     useEffect(() => {
         (async () => {
             if (Platform.OS !== 'web') {
@@ -97,7 +68,7 @@ export default function ImageUploadScreen() {
     }, []);
 
 
-    //Í∞§Îü¨Î¶¨ÏóêÏÑú ÏÇ¨ÏßÑ Í≥†Î•¥Í∏∞
+    // ∞∂∑Ø∏Æø°º≠ ªÁ¡¯ ∞Ì∏£±‚
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -111,7 +82,7 @@ export default function ImageUploadScreen() {
         }
     };
 
-    //Ïπ¥Î©îÎùºÎ°ú Ï∞çÍ∏∞
+    // ƒ´∏ﬁ∂Û∑Œ ¬Ô±‚
     const takePicture = async () => {
         try {
             let result = await ImagePicker.launchCameraAsync({
@@ -138,23 +109,11 @@ export default function ImageUploadScreen() {
     };
 
 
-    // ÏóÖÎ°úÎìú -> ÏÇ¨ÏßÑ: Ïä§ÌÜ†Î¶¨ÏßÄ, ÎÇòÎ®∏ÏßÄ Ï†ïÎ≥¥: ÌååÏù¥Ïñ¥Ïä§ÌÜ†Ïñ¥
+    // æ˜∑ŒµÂ -> ªÁ¡¯: Ω∫≈‰∏Æ¡ˆ, ≥™∏”¡ˆ ¡§∫∏: ∆ƒ¿ÃæÓΩ∫≈‰æÓ
     const uploadImage = async () => {
         try {
             if (!selectedImage || !temperatureFeedback || !comfortFeedback) {
-                Alert.alert(
-                    'Error',
-                    'Please select an image, provide feedback, and rate the image first',
-                    [
-                        {
-                            text: 'OK',
-                            onPress: () => {
-                                console.log('User clicked OK');
-                            },
-                        },
-                    ],
-                    { cancelable: false }
-                );
+                console.error('Please select an image, provide feedback, and rate the image first');
                 return;
             }
 
@@ -173,7 +132,7 @@ export default function ImageUploadScreen() {
             );
             const weatherData = await weatherResponse.json();
 
-            // ÌïÑÏöîÌïú Ï†ïÎ≥¥Îßå ÌååÏù¥Ïñ¥Ïä§ÌÜ†Ïñ¥Ïóê Ïò¨Î¶¨Í∏∞
+            // « ø‰«— ¡§∫∏∏∏ ∆ƒ¿ÃæÓΩ∫≈‰æÓø° ø√∏Æ±‚
             const { coord, main, name, weather } = weatherData;
             const { lat, lon } = coord;
             const { feels_like, temp } = main;
@@ -199,8 +158,6 @@ export default function ImageUploadScreen() {
             console.log('Temperature:', temp);
             console.log('City Name:', name);
             console.log('Weather Description:', description);
-
-            uploadToFastAPI(downloadURL);
 
             const feedbackDocRef = await addDoc(collection(firestore, 'feedback'), {
                 timestamp: new Date(),
@@ -242,15 +199,7 @@ export default function ImageUploadScreen() {
         <View style={styles.container}>
             <Button title="Take Picture" onPress={takePicture} />
             <Button title="Pick Image from Gallery" onPress={pickImage} />
-            <View style={styles.imageContainer}>
-                {!selectedImage ? (
-                    <Text>Please select an image first</Text>
-                ) : (
-                    <Image source={{ uri: selectedImage }} style={styles.image} />
-                )}
-            </View>
-
-
+            {selectedImage && <Image source={{ uri: selectedImage }} style={styles.image} />}
 
             <View style={styles.feedbackContainer}>
                 <View style={styles.feedbackRow}>
@@ -300,18 +249,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    imageContainer: {
-        width: 200, 
-        height: 200, 
-        marginTop: 20,
-        borderWidth: 1,
-        borderColor: 'lightgray',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     image: {
         width: 200,
         height: 200,
+        marginTop: 20,
     },
     feedbackContainer: {
         marginTop: 20,

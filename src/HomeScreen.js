@@ -1,4 +1,4 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Image, ScrollView } from 'react-native';
 import * as Location from 'expo-location';
 import { initializeApp } from 'firebase/app';
@@ -30,8 +30,6 @@ const HomeScreen = () => {
     const [location, setLocation] = useState(null);
 
     const [forecastData, setForecastData] = useState([]);
-
-    const childComponentRef = useRef();
 
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -262,7 +260,6 @@ const HomeScreen = () => {
                         contentContainerStyle={styles.previousClothesScrollView}
                     >
 
-
                         {loading ? (
                             <Text>Loading...</Text>
                         ) : (
@@ -274,13 +271,9 @@ const HomeScreen = () => {
                                             style={styles.previousClothImage}
                                             source={{ uri: item.downloadURL }} // Use source attribute for images in React Native
                                         />
-                                        <Text style={styles.previousClothDate}>
-                                        {new Date(item.timestamp.toDate()).toLocaleDateString()}
-                                    </Text>
                                         {/* <img style={styles.previousClothImage}
                                     src={item.downloadURL} /> */}
                                         {/* <Text style={styles.previousClothDate}>{item.downloadURL}</Text> */}
-
                                     </View>
                             ))
                         )}
@@ -389,8 +382,6 @@ const styles = StyleSheet.create({
         height: 190,
         resizeMode: 'cover',
         borderRadius: 8,
-        marginRight: 10,
-
     },
     previousClothDate: {
         textAlign: 'center',
