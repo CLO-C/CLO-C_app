@@ -1,4 +1,4 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Image, ScrollView } from 'react-native';
 import * as Location from 'expo-location';
 import { initializeApp } from 'firebase/app';
@@ -30,8 +30,6 @@ const HomeScreen = () => {
     const [location, setLocation] = useState(null);
 
     const [forecastData, setForecastData] = useState([]);
-
-    const childComponentRef = useRef();
 
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -261,7 +259,6 @@ const HomeScreen = () => {
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.previousClothesScrollView}
                     >
-
 
                         {loading ? (
                             <Text>Loading...</Text>
