@@ -54,6 +54,35 @@ export default function ImageUploadScreen() {
     const [comfortFeedback, setComfortFeedback] = useState(null);
     const [uploading, setUploading] = useState(false);
 
+    const uploadToFastAPI = async (imageLink) => {
+        console.log("UploadToFastAPI")
+        console.log("Link:", imageLink)
+        const encodedImageLink = encodeURIComponent(imageLink);
+        const apiUrl = `http://localhost:8000/detect?image_link=${encodedImageLink}`;
+
+        try {
+            const response = await fetch('http://localhost:8000/detect?image_link=' +encodedImageLink, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ image_link: imageLink }),
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to send image link to server');
+            }
+
+            const result = await response.json();
+            console.log('Server response:', result);
+            // Handle the response from the server here
+          } catch (error) {
+            console.error('Error sending image link to server:', error.message);
+            // Handle errors here
+          }
+
+    };
+
     useEffect(() => {
         (async () => {
             if (Platform.OS !== 'web') {
@@ -68,7 +97,7 @@ export default function ImageUploadScreen() {
     }, []);
 
 
-    // °¶·¯¸®¿¡¼­ »çÁø °í¸£±â
+    //ê°¤ëŸ¬ë¦¬ì—ì„œ ì‚¬ì§„ ê³ ë¥´ê¸°
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -82,7 +111,7 @@ export default function ImageUploadScreen() {
         }
     };
 
-    // Ä«¸Ş¶ó·Î Âï±â
+    //ì¹´ë©”ë¼ë¡œ ì°ê¸°
     const takePicture = async () => {
         try {
             let result = await ImagePicker.launchCameraAsync({
@@ -109,7 +138,7 @@ export default function ImageUploadScreen() {
     };
 
 
-    // ¾÷·Îµå -> »çÁø: ½ºÅä¸®Áö, ³ª¸ÓÁö Á¤º¸: ÆÄÀÌ¾î½ºÅä¾î
+    // ì—…ë¡œë“œ -> ì‚¬ì§„: ìŠ¤í† ë¦¬ì§€, ë‚˜ë¨¸ì§€ ì •ë³´: íŒŒì´ì–´ìŠ¤í† ì–´
     const uploadImage = async () => {
         try {
             if (!selectedImage || !temperatureFeedback || !comfortFeedback) {
@@ -132,7 +161,7 @@ export default function ImageUploadScreen() {
             );
             const weatherData = await weatherResponse.json();
 
-            // ÇÊ¿äÇÑ Á¤º¸¸¸ ÆÄÀÌ¾î½ºÅä¾î¿¡ ¿Ã¸®±â
+            // í•„ìš”í•œ ì •ë³´ë§Œ íŒŒì´ì–´ìŠ¤í† ì–´ì— ì˜¬ë¦¬ê¸°
             const { coord, main, name, weather } = weatherData;
             const { lat, lon } = coord;
             const { feels_like, temp } = main;
@@ -158,6 +187,8 @@ export default function ImageUploadScreen() {
             console.log('Temperature:', temp);
             console.log('City Name:', name);
             console.log('Weather Description:', description);
+
+            uploadToFastAPI(downloadURL);
 
             const feedbackDocRef = await addDoc(collection(firestore, 'feedback'), {
                 timestamp: new Date(),
