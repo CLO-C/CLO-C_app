@@ -141,8 +141,10 @@ const HomeScreen = () => {
                 return 'cloud-bolt';
             case 'Drizzle':
                 return 'cloud-rain';
+            case 'Mist':
+                return 'cloud';
             default:
-                return 'smog';
+                return 'question';
         }
     };
 
@@ -263,18 +265,22 @@ const HomeScreen = () => {
                         {loading ? (
                             <Text>Loading...</Text>
                         ) : (
-                                data.map((item, index) => (
-                                    <View key={index}>
-                                        
-                                            
-                                        <Image
-                                            style={styles.previousClothImage}
-                                            source={{ uri: item.downloadURL }} // Use source attribute for images in React Native
-                                        />
-                                        {/* <img style={styles.previousClothImage}
+                            data.map((item, index) => (
+                                <View key={index}>
+
+
+                                    <Image
+                                        style={styles.previousClothImage}
+                                        source={{ uri: item.downloadURL }} // Use source attribute for images in React Native
+                                    />
+                                    <Text style={styles.previousClothDate}>
+                                        {new Date(item.timestamp.toDate()).toLocaleDateString()}
+                                    </Text>
+
+                                    {/* <img style={styles.previousClothImage}
                                     src={item.downloadURL} /> */}
-                                        {/* <Text style={styles.previousClothDate}>{item.downloadURL}</Text> */}
-                                    </View>
+                                    {/* <Text style={styles.previousClothDate}>{item.downloadURL}</Text> */}
+                                </View>
                             ))
                         )}
                     </ScrollView>
@@ -382,6 +388,8 @@ const styles = StyleSheet.create({
         height: 190,
         resizeMode: 'cover',
         borderRadius: 8,
+        marginRight: 10,
+
     },
     previousClothDate: {
         textAlign: 'center',
