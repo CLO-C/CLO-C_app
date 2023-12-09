@@ -31,9 +31,11 @@ const BottomTabNavigator = () => {
                     // 아이콘 이름에 따라 Ionicons 아이콘을 표시
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
-                tabBarActiveTintColor: '#000000',
-                tabBarShowLabel: false,
             })}
+            tabOptions={{
+                activeTintColor: 'black', // 선택된 탭의 색상
+                inactiveTintColor: 'gray', // 선택되지 않은 탭의 색상
+            }}
         >
             <Tab.Screen name="Home" component={HomeScreen} />
             <Tab.Screen name="Calendar" component={CalendarScreen} />
