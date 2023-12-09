@@ -19,45 +19,45 @@ const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
 
 const CalendarScreen = () => {
-  const [selectedDate, setSelectedDate] = useState('2023-12-09'); // Set initial date to December 8th
-  const [photoUrl, setPhotoUrl] = useState(null);
+    const [selectedDate, setSelectedDate] = useState('2023-12-08'); // Set initial date to December 8th
+    const [photoUrl, setPhotoUrl] = useState(null);
 
-  useEffect(() => {
-    const fetchPhoto = async () => {
-      try {
-        const storageRef = ref(storage, 'Cloth/1701946382295.jpg'); // Update path to target '1701946382295.jpg'
-        const url = await getDownloadURL(storageRef);
-        setPhotoUrl(url);
-      } catch (error) {
-        console.error('Error fetching photo:', error);
-        setPhotoUrl(null);
-      }
+    useEffect(() => {
+        const fetchPhoto = async () => {
+            try {
+                const storageRef = ref(storage, 'Cloth/1701946382295.jpg'); // Update path to target '1701946382295.jpg'
+                const url = await getDownloadURL(storageRef);
+                setPhotoUrl(url);
+            } catch (error) {
+                console.error('Error fetching photo:', error);
+                setPhotoUrl(null);
+            }
+        };
+
+        fetchPhoto();
+    }, []);
+
+    const handleDayClick = (day) => {
+        setSelectedDate(day.dateString);
     };
 
-    fetchPhoto();
-  }, []);
-
-  const handleDayClick = (day) => {
-    setSelectedDate(day.dateString);
-  };
-
-  return (
-    <View style={{ flex: 1 }}>
-      <View style={{ height: 300 }}>
-        <Calendar
-          onDayPress={handleDayClick}
-          markedDates={{ [selectedDate]: { selected: true } }}
-        />
-      </View>
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        {photoUrl ? (
-          <Image source={{ uri: photoUrl }} style={{ width: 200, height: 200 }} />
-        ) : (
-          <Text>No photo for the selected date</Text>
-        )}
-      </View>
-    </View>
-  );
+    return (
+        <View style={{ flex: 1 }}>
+            <View style={{ height: 300 }}>
+                <Calendar
+                    onDayPress={handleDayClick}
+                    markedDates={{ [selectedDate]: { selected: true } }}
+                />
+            </View>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                {photoUrl ? (
+                    <Image source={{ uri: photoUrl }} style={{ width: 200, height: 200 }} />
+                ) : (
+                    <Text>No photo for the selected date</Text>
+                )}
+            </View>
+        </View>
+    );
 };
 
 export default CalendarScreen;

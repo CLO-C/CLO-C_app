@@ -18,6 +18,7 @@ import {
     getDownloadURL,
 } from 'firebase/storage';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import * as Location from 'expo-location';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD7jlUzKiSs6oLOMptBnweP8XhrOuiUyZ8",
@@ -29,6 +30,8 @@ const firebaseConfig = {
     appId: "1:485093561661:web:e4d4743dda2407b90f2154",
     measurementId: "G-ZXG5FLMMFN"
 };
+
+const API_KEY = 'd5d622b87e057c9805f232ce7a7f8eea';
 
 const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
@@ -51,37 +54,6 @@ export default function ImageUploadScreen() {
     const [comfortFeedback, setComfortFeedback] = useState(null);
     const [uploading, setUploading] = useState(false);
 
-    const uploadToFastAPI = async (imageLink) => {
-        console.log("UploadToFastAPI")
-        console.log("Link:", imageLink)
-        const encodedImageLink = encodeURIComponent(imageLink);
-        const apiUrl = `http://localhost:8000/detect?image_link=${encodedImageLink}`;
-
-        try {
-            const response = await fetch('http://localhost:8000/detect?image_link=' +encodedImageLink, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ image_link: imageLink }),
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to send image link to server');
-            }
-
-            const result = await response.json();
-            console.log('Server response:', result);
-            // Handle the response from the server here
-          } catch (error) {
-            console.error('Error sending image link to server:', error.message);
-            // Handle errors here
-          }
-
-    };
-
-
-
     useEffect(() => {
         (async () => {
             if (Platform.OS !== 'web') {
@@ -96,7 +68,7 @@ export default function ImageUploadScreen() {
     }, []);
 
 
-    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    // °¶·¯¸®¿¡¼­ »çÁø °í¸£±â
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -110,7 +82,7 @@ export default function ImageUploadScreen() {
         }
     };
 
-    // Ä«ï¿½Þ¶ï¿½ï¿½ ï¿½ï¿½ï¿½
+    // Ä«¸Þ¶ó·Î Âï±â
     const takePicture = async () => {
         try {
             let result = await ImagePicker.launchCameraAsync({
@@ -137,44 +109,79 @@ export default function ImageUploadScreen() {
     };
 
 
-    // ï¿½ï¿½ï¿½Îµï¿½ -> ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ä¸®ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½Ì¾î½ºï¿½ï¿½ï¿½
+    // ¾÷·Îµå -> »çÁø: ½ºÅä¸®Áö, ³ª¸ÓÁö Á¤º¸: ÆÄÀÌ¾î½ºÅä¾î
     const uploadImage = async () => {
         try {
             if (!selectedImage || !temperatureFeedback || !comfortFeedback) {
-                console.error('Please select an image, provide feedback, and rate the image first');
+                Alert.alert(
+                    'Error',
+                    'Please select an image, provide feedback, and rate the image first',
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => {
+                                console.log('User clicked OK');
+                            },
+                        },
+                    ],
+                    { cancelable: false }
+                );
                 return;
             }
 
             setUploading(true);
 
-            const response = await fetch(selectedImage);
-            const blob = await response.blob();
+            // Fetch current weather data
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                console.log('Permission to access location was denied');
+                return;
+            }
 
+            const location = await Location.getCurrentPositionAsync({});
+            const weatherResponse = await fetch(
+                `http://api.openweathermap.org/data/2.5/weather?lat=${location.coords.latitude}&lon=${location.coords.longitude}&appid=${API_KEY}&units=metric`
+            );
+            const weatherData = await weatherResponse.json();
+
+            // ÇÊ¿äÇÑ Á¤º¸¸¸ ÆÄÀÌ¾î½ºÅä¾î¿¡ ¿Ã¸®±â
+            const { coord, main, name, weather } = weatherData;
+            const { lat, lon } = coord;
+            const { feels_like, temp } = main;
+            const { description } = weather[0];
+
+            // Fetch image data
+            const imageResponse = await fetch(selectedImage);
+            const blob = await imageResponse.blob();
+
+            // Upload image to Firebase Storage
             const storageRef = ref(storage, `Cloth/${Date.now()}.jpg`);
             const uploadTask = uploadBytes(storageRef, blob);
-
-            await uploadTask.then(async () => {
-              // Introduce a delay (e.g., using setTimeout) before getting the download URL
-              const downloadURL = await getDownloadURL(storageRef);
-              console.log('Image uploaded successfully to Firebase! Download URL:', downloadURL);
-
-            }).catch((error) => {
-              console.error('Error uploading image to Firebase:', error);
-            });
+            await uploadTask;
 
             const downloadURL = await getDownloadURL(storageRef);
 
             console.log('Image uploaded successfully! Download URL:', downloadURL);
             console.log('Temperature Feedback:', temperatureFeedback);
             console.log('Comfort Feedback:', comfortFeedback);
-
-            uploadToFastAPI(downloadURL);
+            console.log('Latitude:', lat);
+            console.log('Longitude:', lon);
+            console.log('Feels Like:', feels_like);
+            console.log('Temperature:', temp);
+            console.log('City Name:', name);
+            console.log('Weather Description:', description);
 
             const feedbackDocRef = await addDoc(collection(firestore, 'feedback'), {
                 timestamp: new Date(),
                 downloadURL,
                 temperatureFeedback,
                 comfortFeedback,
+                latitude: lat,
+                longitude: lon,
+                feelsLike: feels_like,
+                temperature: temp,
+                cityName: name,
+                weatherDescription: description,
             });
 
             console.log('Feedback saved to Firestore with ID:', feedbackDocRef.id);
@@ -194,17 +201,25 @@ export default function ImageUploadScreen() {
                 ],
                 { cancelable: false }
             );
-
         } catch (error) {
             console.error('Error preparing image for upload:', error);
         }
     };
 
+
     return (
         <View style={styles.container}>
             <Button title="Take Picture" onPress={takePicture} />
             <Button title="Pick Image from Gallery" onPress={pickImage} />
-            {selectedImage && <Image source={{ uri: selectedImage }} style={styles.image} />}
+            <View style={styles.imageContainer}>
+                {!selectedImage ? (
+                    <Text>Please select an image first</Text>
+                ) : (
+                    <Image source={{ uri: selectedImage }} style={styles.image} />
+                )}
+            </View>
+
+
 
             <View style={styles.feedbackContainer}>
                 <View style={styles.feedbackRow}>
@@ -254,10 +269,18 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    imageContainer: {
+        width: 200, 
+        height: 200, 
+        marginTop: 20,
+        borderWidth: 1,
+        borderColor: 'lightgray',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     image: {
         width: 200,
         height: 200,
-        marginTop: 20,
     },
     feedbackContainer: {
         marginTop: 20,
@@ -265,15 +288,16 @@ const styles = StyleSheet.create({
     feedbackRow: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        marginTop: 10,
+        marginBottom: 10,
+
     },
     feedbackButton: {
         backgroundColor: 'white',
         padding: 10,
         borderRadius: 5,
-        marginLeft: 10,
+        marginHorizontal: 5,
     },
     selectedButton: {
-        backgroundColor: 'gray',
+        backgroundColor: 'lightgray',
     },
 });

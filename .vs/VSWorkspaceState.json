@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
+    "\\components",
     "\\src"
   ],
-  "SelectedNode": "\\src\\fbase.js",
+  "SelectedNode": "\\src\\AddScreen.js",
   "PreviewInSolutionExplorer": false
 }

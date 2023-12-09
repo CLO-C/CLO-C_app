@@ -1,6 +1,17 @@
-/*import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { theme } from '../core/theme'
+import Background from '../components/Background';
+import BackButton from '../components/BackButton';
+import Logo from '../components/Logo';
+import Header from '../components/Header';
+import Button from '../components/Button';
+import TextInput from '../components/TextInput';
+
+import { emailValidator } from '../helpers/emailValidator';
+import { passwordValidator } from '../helpers/passwordValidator';
+
+
 
 export default function LoginScreen({ navigation }) {
     const [email, setEmail] = useState({ value: '', error: '' })
@@ -24,7 +35,7 @@ export default function LoginScreen({ navigation }) {
         <Background>
             <BackButton goBack={navigation.goBack} />
             <Logo />
-            <Header>Welcome back.</Header>
+            <Header>Clo-C Login</Header>
             <TextInput
                 label="Email"
                 returnKeyType="next"
@@ -46,18 +57,12 @@ export default function LoginScreen({ navigation }) {
                 errorText={password.error}
                 secureTextEntry
             />
-            <View style={styles.forgotPassword}>
-                <TouchableOpacity
-                    onPress={() => navigation.navigate('ResetPasswordScreen')}
-                >
-                    <Text style={styles.forgot}>Forgot your password?</Text>
-                </TouchableOpacity>
-            </View>
+            
             <Button mode="contained" onPress={onLoginPressed}>
                 Login
             </Button>
             <View style={styles.row}>
-                <Text>Don¡¯t have an account? </Text>
+                <Text>Don't have an account? </Text>
                 <TouchableOpacity onPress={() => navigation.replace('RegisterScreen')}>
                     <Text style={styles.link}>Sign up</Text>
                 </TouchableOpacity>
@@ -65,6 +70,15 @@ export default function LoginScreen({ navigation }) {
         </Background>
     )
 }
+/*
+            <View style={styles.forgotPassword}>
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('ResetPasswordScreen')}
+                >
+                    <Text style={styles.forgot}>Forgot your password?</Text>
+                </TouchableOpacity>
+            </View>
+*/
 
 const styles = StyleSheet.create({
     forgotPassword: {
@@ -85,36 +99,3 @@ const styles = StyleSheet.create({
         color: theme.colors.primary,
     },
 })
-*/
-
-import * as React from 'react';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-import { Button } from 'react-native';
-
-WebBrowser.maybeCompleteAuthSession();
-
-export default function LoginScreen() {
-    const [request, response, promptAsync] = Google.useAuthRequest({
-        expoClientId: 'GOOGLE_GUID.apps.googleusercontent.com',
-        iosClientId: 'GOOGLE_GUID.apps.googleusercontent.com',
-        androidClientId: 'GOOGLE_GUID.apps.googleusercontent.com',
-        webClientId: 'GOOGLE_GUID.apps.googleusercontent.com',
-    });
-
-    React.useEffect(() => {
-        if (response?.type === 'success') {
-            const { authentication } = response;
-        }
-    }, [response]);
-
-    return (
-        <Button
-            disabled={!request}
-            title="Login"
-            onPress={() => {
-                promptAsync();
-            }}
-        />
-    );
-}
