@@ -6,6 +6,7 @@ import { getDatabase, ref, set } from 'firebase/database';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import axios from 'axios';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
+import { getStorage,getDownloadURL } from 'firebase/storage';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD7jlUzKiSs6oLOMptBnweP8XhrOuiUyZ8",
@@ -43,7 +44,10 @@ const HomeScreen = () => {
 
                 const fetchedData = [];
                 querySnapshot.forEach((doc) => {
-                    fetchedData.push(doc.data());
+                    const data = doc.data();
+                    if (data.feelsLike >= weatherData.main.temp-1 && data.temperature >= weatherData.main.temp-1) {
+                        fetchedData.push(data);
+                    }
                 });
                 setData(fetchedData);
                 setLoading(false);
