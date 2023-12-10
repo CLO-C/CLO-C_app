@@ -1,6 +1,7 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Image, ScrollView } from 'react-native';
 import * as Location from 'expo-location';
+import { getStorage,getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, set } from 'firebase/database';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -26,6 +27,7 @@ const db = getFirestore(app);
 const API_KEY = 'd5d622b87e057c9805f232ce7a7f8eea';
 
 const HomeScreen = () => {
+    
     const [weatherData, setWeatherData] = useState(null);
     const [location, setLocation] = useState(null);
 
@@ -36,25 +38,28 @@ const HomeScreen = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
 
+    useEffect(() => {
+    
         async function fetchData() {
             try {
                 const q = query(collection(db, 'feedback'), where('comfortFeedback', '==', 'comfortable'));
                 const querySnapshot = await getDocs(q);
-
+        
                 const fetchedData = [];
                 querySnapshot.forEach((doc) => {
-                    fetchedData.push(doc.data());
+                    const data = doc.data();
+                    if (data.feelsLike >= weatherData.main.temp-1 && data.temperature >= weatherData.main.temp-1) {
+                        fetchedData.push(data);
+                    }
                 });
+        
                 setData(fetchedData);
                 setLoading(false);
-
-
             } catch (error) {
                 console.error('Error fetching data: ', error);
             }
-        };
+        }
 
         const fetchLocationAndWeather = async () => {
             try {
@@ -268,15 +273,10 @@ const HomeScreen = () => {
                         ) : (
                                 data.map((item, index) => (
                                     <View key={index}>
-                                        
-                                            
                                         <Image
                                             style={styles.previousClothImage}
                                             source={{ uri: item.downloadURL }} // Use source attribute for images in React Native
                                         />
-                                        {/* <img style={styles.previousClothImage}
-                                    src={item.downloadURL} /> */}
-                                        {/* <Text style={styles.previousClothDate}>{item.downloadURL}</Text> */}
                                     </View>
                             ))
                         )}
