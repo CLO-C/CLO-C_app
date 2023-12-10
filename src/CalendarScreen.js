@@ -23,8 +23,10 @@ const db = getFirestore(app);
 
 const CalendarScreen = () => {
 
-    const [selectedDate, setSelectedDate] = useState(null); 
+    const [selectedDate, setSelectedDate] = useState(null);
     const [data, setData] = useState([]);
+    const [today, setToday] = useState('');
+
 
     useEffect(() => {
 
@@ -37,9 +39,9 @@ const CalendarScreen = () => {
                     const endOfDay = new Date(startOfDay);
                     endOfDay.setDate(endOfDay.getDate() + 1);
                     endOfDay.setHours(0, 0, 0, 0); // Set the time to midnight (0 am)
-                    
+
                     const q = query(
-                        collection(db, 'feedback'), 
+                        collection(db, 'feedback'),
                         where('timestamp', '>=', startOfDay),
                         where('timestamp', '<', endOfDay)
                     );
@@ -53,7 +55,7 @@ const CalendarScreen = () => {
 
                     setData(fetchedData);
                 }
-                else{
+                else {
                     setData([]);
                 }
             } catch (error) {
@@ -82,65 +84,110 @@ const CalendarScreen = () => {
         }
     };
 
+    const DegreeSymbol = () => <Text>&#176;</Text>;
+
+    // 선택한 날 캘린더에 표시
+    const markDatesSelected = (selectedDate) => {
+        const markedDates = {};
+
+        // Mark the selected date
+        if (selectedDate) {
+            const selectedDateFormatted = selectedDate.split('T')[0];
+            markedDates[selectedDateFormatted] = { selected: true, selectedColor: 'skyblue' };
+        }
+
+        return markedDates;
+    };
+
+    // 사진 업로드 한 날 캘린더에 표시
+    const markDatesWithImages = () => {
+        const markedDates = {};
+
+        // Mark all dates with images
+        data.forEach((item) => {
+            const date = item.timestamp.toDate().toISOString().split('T')[0];
+            markedDates[date] = { marked: true, dotColor: 'gray' };
+        });
+
+        return markedDates;
+    };
+
     return (
         <View style={{ flex: 1 }}>
             <View style={{ height: 300 }}>
                 <Calendar
                     onDayPress={handleDayClick}
-                    markedDates={{ [selectedDate]: { selected: true } }}
+                    markedDates={{
+                        ...markDatesWithImages(),
+                        [today]: { marked: true, dotColor: 'green' }, // Today's date marker
+                        [selectedDate]: { selected: true, selectedColor: 'skyblue' }, // Selected date marker
+                    }}
                 />
-                
-                <View style={styles.imageContainer}>
-                    {data.length === 0 ? (
-                            <Text>No photo for the selected date</Text>
-                        ) : (
-                                data.map((item, index) => (
-                                    <View key={index}>                                    
-                                        <Image
-                                            style={styles.previousClothImage}
-                                            source={{ uri: item.downloadURL }} // Use source attribute for images in React Native
-                                        />
-                                        {/* <Text style={styles.previousClothData}>{formatDate(item.timestamp)}</Text> */}
-                                        <Text style={styles.previousClothData}>
-                                            Date: {item.timestamp instanceof Timestamp ? item.timestamp.toDate().toISOString().replace('T', ' ').substring(0, 16) : null}
-                                        </Text>
-                                        <Text style={styles.previousClothData}>Weather: {item.weatherDescription}</Text>
-                                        <Text style={styles.previousClothData}>Temperature: {item.temperature}</Text>
-                                        <Text style={styles.previousClothData}>ComfortFeedback: {item.comfortFeedback}</Text>
-                                    </View>
-                            ))
-                        )}
-                </View>
             </View>
 
+            <View style={styles.containerWithImages}>
+                {data.length === 0 ? (
+                    <Text style={styles.noPhotoText}>No photo for the selected date</Text>
+                ) : (
+                    data.map((item, index) => (
+                        <View key={index} style={styles.itemContainer}>
+                            <Image
+                                style={styles.previousClothImage}
+                                source={{ uri: item.downloadURL }}
+                            />
+                            <View style={styles.textContainer}>
+                                <Text style={styles.previousClothData}>
+                                    {item.timestamp instanceof Timestamp
+                                        ? item.timestamp.toDate().toISOString().replace('T', ' ').substring(0, 16)
+                                        : null}
+                                </Text>
+                                <Text style={styles.previousClothData}>{item.weatherDescription}</Text>
+                                <Text style={styles.previousClothData}>
+                                    {item.temperature}
+                                    <DegreeSymbol />C
+                                </Text>
+                                <Text style={styles.previousClothData}>
+                                    {item.temperatureFeedback} / {item.comfortFeedback}
+                                </Text>
+                            </View>
+                        </View>
+                    ))
+                )}
+            </View>
         </View>
     );
 };
 
 const styles = {
-    imageContainer: {
-        flex: 1, 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        position: 'absolute',
-        bottom: -200,
-        left: 0,
-        right: 0,
+    containerWithImages: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        padding: 20,
+        marginTop: 45,
     },
-
+    itemContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    noPhotoText: {
+        fontSize: 17,
+        marginTop: 50,
+    },
     previousClothImage: {
-        width: 190,
+        width: 210,
         height: 300,
         resizeMode: 'cover',
         borderRadius: 8,
-        position: 'absolute',
-        bottom: -180,
-        left: -180
     },
-
+    textContainer: {
+        marginTop: 5,
+        marginLeft: 20,
+    },
     previousClothData: {
         fontSize: 15,
         marginBottom: 10,
-    }
-  };
+    },
+};
 export default CalendarScreen;

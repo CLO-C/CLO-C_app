@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import Swiper from 'react-native-swiper';
 
 const ClosetScreen = () => {
 
@@ -29,12 +30,13 @@ const ClosetScreen = () => {
 
     return (
         <View style={styles.container}>
-
             <View style={styles.swiperContainer}>
                 <Swiper style={styles.swiper} showsButtons={false} loop dotStyle={styles.dotStyle} activeDotStyle={styles.activeDotStyle}>
                     {topImages.map((image, index) => (
                         <View key={index} style={styles.slide}>
-                            <Image source={image} style={styles.topImage} />
+                            <View style={styles.imageContainerTop}>
+                                <Image source={image} style={styles.topImage} />
+                            </View>
                         </View>
                     ))}
                 </Swiper>
@@ -44,7 +46,9 @@ const ClosetScreen = () => {
                 <Swiper style={styles.swiper} showsButtons={false} loop dotStyle={styles.dotStyle} activeDotStyle={styles.activeDotStyle}>
                     {bottomImages.map((image, index) => (
                         <View key={index} style={styles.slide}>
-                            <Image source={image} style={styles.bottomImage} />
+                            <View style={styles.imageContainerBottom}>
+                                <Image source={image} style={styles.bottomImage} />
+                            </View>
                         </View>
                     ))}
                 </Swiper>
@@ -54,7 +58,9 @@ const ClosetScreen = () => {
                 <Swiper style={styles.swiper} showsButtons={false} loop dotStyle={styles.dotStyle} activeDotStyle={styles.activeDotStyle}>
                     {shoeImages.map((image, index) => (
                         <View key={index} style={styles.slide}>
-                            <Image source={image} style={styles.shoeImage} />
+                            <View style={styles.imageContainerShoe}>
+                                <Image source={image} style={styles.shoeImage} />
+                            </View>
                         </View>
                     ))}
                 </Swiper>
@@ -75,6 +81,24 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 10,
     },
+    imageContainerTop: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        borderRadius: 8,
+    },
+    imageContainerBottom: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        borderRadius: 8,
+    },
+    imageContainerShoe: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        borderRadius: 8,
+    },
     swiper: {
         height: 200,
     },
@@ -84,20 +108,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     topImage: {
-        width: 180,
-        height: 180,
+        width: 200,
+        height: 200,
         resizeMode: 'contain',
         borderRadius: 8,
     },
     bottomImage: {
-        width: 150,
-        height: 230,
+        width: 200,
+        height: 200,
         resizeMode: 'contain',
         borderRadius: 8,
     },
     shoeImage: {
-        width: 230,
-        height: 130,
+        width: 200,
+        height: 200,
         resizeMode: 'contain',
         borderRadius: 8,
     },
@@ -106,15 +130,16 @@ const styles = StyleSheet.create({
         height: 5,
         borderRadius: 5,
         margin: 5,
-        backgroundColor: 'lightgray', 
+        backgroundColor: 'lightgray',
     },
     activeDotStyle: {
         width: 5,
         height: 5,
         borderRadius: 5,
         margin: 5,
-        backgroundColor: 'gray', 
+        backgroundColor: 'gray',
     },
 });
+
 
 export default ClosetScreen;
