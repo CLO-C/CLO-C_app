@@ -54,19 +54,19 @@ export default function ImageUploadScreen() {
     const [comfortFeedback, setComfortFeedback] = useState(null);
     const [uploading, setUploading] = useState(false)
 
-    const uploadToFastAPI = async (imageLink) => {
+    const uploadToFastAPI = async (feedbackID) => {
         console.log("UploadToFastAPI")
-        console.log("Link:", imageLink)
-        const encodedImageLink = encodeURIComponent(imageLink);
-        const apiUrl = `http://localhost:8000/detect?image_link=${encodedImageLink}`;
+        console.log("ID:", feedbackID)
+        // const encodedFeedbackID = encodeURIComponent(feedbackID);
+        const apiUrl = `http://localhost:8000/detect?feedbackID=%20${feedbackID}`;
 
         try {
-            const response = await fetch('http://localhost:8000/detect?imgSrc=' +encodedImageLink, {
+            const response = await fetch(apiUrl, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ image_link: imageLink }),
+              body: JSON.stringify({ feedbackID: feedbackID }),
             });
 
             if (!response.ok) {
@@ -201,7 +201,7 @@ export default function ImageUploadScreen() {
             console.log('City Name:', name);
             console.log('Weather Description:', description);
 
-            uploadToFastAPI(downloadURL);
+
 
             const feedbackDocRef = await addDoc(collection(firestore, 'feedback'), {
                 timestamp: new Date(),
@@ -217,6 +217,7 @@ export default function ImageUploadScreen() {
             });
 
             console.log('Feedback saved to Firestore with ID:', feedbackDocRef.id);
+            uploadToFastAPI(feedbackDocRef.id);
 
             setUploading(false);
 
