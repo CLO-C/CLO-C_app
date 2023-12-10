@@ -61,7 +61,7 @@ export default function ImageUploadScreen() {
         const apiUrl = `http://localhost:8000/detect?image_link=${encodedImageLink}`;
 
         try {
-            const response = await fetch('http://localhost:8000/detect?image_link=' +encodedImageLink, {
+            const response = await fetch('http://localhost:8000/detect?imgSrc=' +encodedImageLink, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
