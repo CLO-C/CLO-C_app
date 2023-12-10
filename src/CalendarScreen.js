@@ -86,20 +86,6 @@ const CalendarScreen = () => {
 
     const DegreeSymbol = () => <Text>&#176;</Text>;
 
-    // 선택한 날 캘린더에 표시
-    const markDatesSelected = (selectedDate) => {
-        const markedDates = {};
-
-        // Mark the selected date
-        if (selectedDate) {
-            const selectedDateFormatted = selectedDate.split('T')[0];
-            markedDates[selectedDateFormatted] = { selected: true, selectedColor: 'skyblue' };
-        }
-
-        return markedDates;
-    };
-
-    // 사진 업로드 한 날 캘린더에 표시
     const markDatesWithImages = () => {
         const markedDates = {};
 
@@ -112,14 +98,18 @@ const CalendarScreen = () => {
         return markedDates;
     };
 
+    // ...
+
+    // Mark all dates with images even if no date is selected
+    const allDatesWithImages = markDatesWithImages();
+
     return (
         <View style={{ flex: 1 }}>
             <View style={{ height: 300 }}>
                 <Calendar
                     onDayPress={handleDayClick}
                     markedDates={{
-                        ...markDatesWithImages(),
-                        [today]: { marked: true, dotColor: 'green' }, // Today's date marker
+                        ...allDatesWithImages,
                         [selectedDate]: { selected: true, selectedColor: 'skyblue' }, // Selected date marker
                     }}
                 />

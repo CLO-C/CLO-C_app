@@ -6,7 +6,7 @@ import { getDatabase, ref, set } from 'firebase/database';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import axios from 'axios';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
-import { getStorage,getDownloadURL } from 'firebase/storage';
+//import { getStorage,getDownloadURL } from 'firebase/storage';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD7jlUzKiSs6oLOMptBnweP8XhrOuiUyZ8",
@@ -39,15 +39,16 @@ const HomeScreen = () => {
 
         async function fetchData() {
             try {
-                const q = query(collection(db, 'feedback'), where('comfortFeedback', '==', 'comfortable'));
+
+                const q = query(
+                collection(db, 'feedback'),
+                where('comfortFeedback', '==', 'comfortable')
+            );
                 const querySnapshot = await getDocs(q);
 
                 const fetchedData = [];
                 querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    if (data.feelsLike >= weatherData.main.temp-1 && data.temperature >= weatherData.main.temp-1) {
-                        fetchedData.push(data);
-                    }
+                    fetchedData.push(doc.data());
                 });
                 setData(fetchedData);
                 setLoading(false);
@@ -138,7 +139,7 @@ const HomeScreen = () => {
             case 'Clouds':
                 return 'cloud'; // FontAwesome icon for cloudy weather
             case 'Rain':
-                return 'cloud-showers-heavy'; // FontAwesome icon for rain
+                return 'umbrella'; // FontAwesome icon for rain
             case 'Snow':
                 return 'snowflake';
             case 'Thunderstorm':
