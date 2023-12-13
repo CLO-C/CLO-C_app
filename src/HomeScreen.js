@@ -35,9 +35,12 @@ const HomeScreen = () => {
     const [data, setData] = useState([]);
     const [best, setBest] = useState([]);
     const [crop, setCrop] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [loadingB, setLoadingB] = useState(true);
     const [remain, setRemain] = useState([]);
     const [loadingR, setLoadingR] = useState(true);
+
+    let isFirst = true;
 
     useEffect(() => {
 
@@ -53,28 +56,41 @@ const HomeScreen = () => {
 
                 const fetchedBest = [];
                 const fetchedRemain = [];
+                const fetchedData = [];
 
                 var now = new Date();   // 현재 날짜 및 시간
                 var sevenDaysAgo = new Date(now);
-                sevenDaysAgo.setDate(now.getDate() - 7);   // 7일 전
+                sevenDaysAgo.setDate(now.getDate() - 10);   // 7일 전
                 sevenDaysAgo.setHours(0, 0, 0, 0); // Set the time to midnight (0 am)
 
-                let isFirst = true;
+                //const tem = weatherData.main.temp;
 
                 querySnapshot.forEach((doc) => {
-
                     const feedbackDate = doc.data().timestamp.toDate();
+
                     if ((isFirst) && (feedbackDate < sevenDaysAgo)) {
-                        console.log(feedbackDate);
-
                         fetchedBest.push(doc.data());
-
                         isFirst = false;
                     }
                     else {
                         fetchedRemain.push(doc.data());
                     }
+
+                    //const data = doc.data();
+
+                    //if (data.feelsLike >= tem - 1 && data.feelsLike <= tem + 1) {
+                    //    if ((isFirst) && (feedbackDate < sevenDaysAgo)) {
+                    //        fetchedBest.push(doc.data());
+                    //        isFirst = false;
+                    //    }
+                    //    else {
+                    //        fetchedRemain.push(doc.data());
+                    //    }
+                    //}
                 });
+
+                setData(fetchedData);
+                setLoading(false);
                 setBest(fetchedBest);
                 setLoadingB(false);
                 setRemain(fetchedRemain);
@@ -88,7 +104,6 @@ const HomeScreen = () => {
 
         const fetchCrop = async (best) => {
             try {
-                console.log(best);
                 const fetchedCrop = [];
 
                 const promises = best.map(async (item) => {
@@ -106,8 +121,6 @@ const HomeScreen = () => {
 
                 // Wait for all promises to resolve
                 await Promise.all(promises);
-
-                console.log(fetchedCrop.topURL);
                 setCrop(fetchedCrop);
 
             } catch (error) {
@@ -185,7 +198,7 @@ const HomeScreen = () => {
 
         fetchLocationAndWeather();
         fetchData();
-    }, []);
+    }, [weatherData]);
 
     //            
     const getWeatherIcon = (weatherCondition) => {
@@ -255,7 +268,7 @@ const HomeScreen = () => {
     const getWeatherIcon_Forecast = (icon) => `http://openweathermap.org/img/wn/${icon}.png`;
 
 
-    
+
     const renderPreviousClothItem = (item, index) => (
         <View key={index} style={styles.previousClothItem}>
             <Image source={item.image} style={styles.previousClothImage} />
@@ -423,11 +436,10 @@ const styles = StyleSheet.create({
     clothingImage: {
         width: 90,
         height: 90,
-        resizeMode: 'recover',
-        borderRadius: 8,
+        resizeMode: 'contain',
+        // borderRadius: 20,
         marginRight: 5,
         marginLeft: 5,
-
     },
     forecastContainer: {
         marginTop: 10,

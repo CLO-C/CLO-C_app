@@ -1,6 +1,6 @@
 //import React from 'react';
 //import { View, Text, Image, StyleSheet } from 'react-native';
-import Swiper from 'react-native-swiper';
+import Swiper, { Pagination } from 'react-native-swiper';
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Image, ScrollView } from 'react-native';
 import { initializeApp } from 'firebase/app';
@@ -44,7 +44,6 @@ const ClosetScreen = () => {
                     fetchedData.push(doc.data());
                 });
 
-                console.log(fetchedData);
                 setData(fetchedData);
                 setLoading(false);
 
@@ -62,7 +61,7 @@ const ClosetScreen = () => {
     return (
         <View style={styles.container}>
             <View style={styles.swiperContainer}>
-                <Swiper style={styles.swiper} showsButtons={false} loop dotStyle={styles.dotStyle} activeDotStyle={styles.activeDotStyle}>
+                <Swiper style={styles.swiper} showsButtons={false} loop showsPagination={false}>
                     {data.map((item, index) => (
                         <View key={index} style={styles.slide}>
                             <View style={styles.imageContainerTop}>
@@ -77,7 +76,7 @@ const ClosetScreen = () => {
             </View>
 
             <View style={styles.swiperContainer}>
-                <Swiper style={styles.swiper} showsButtons={false} loop dotStyle={styles.dotStyle} activeDotStyle={styles.activeDotStyle}>
+                <Swiper style={styles.swiper} showsButtons={false} loop showsPagination={false}>
                     {data.map((item, index) => (
                         <View key={index} style={styles.slide}>
                             <View style={styles.imageContainerBottom}>
@@ -92,7 +91,7 @@ const ClosetScreen = () => {
             </View>
 
             <View style={styles.swiperContainer}>
-                <Swiper style={styles.swiper} showsButtons={false} loop dotStyle={styles.dotStyle} activeDotStyle={styles.activeDotStyle}>
+                <Swiper style={styles.swiper} showsButtons={false} loop showsPagination={false}>
                     {data.map((item, index) => (
                         <View key={index} style={styles.slide}>
                             <View style={styles.imageContainerShoe}>
