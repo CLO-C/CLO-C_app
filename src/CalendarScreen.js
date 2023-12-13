@@ -37,7 +37,12 @@ const CalendarScreen = () => {
                     updatedMarkedDates[date] = { marked: true, dotColor: 'gray' };
                     fetchedData.push(doc.data());
                 });
-
+                var now = new Date();   // 현재 날짜 및 시간
+                console.log("현재 : ", now);
+                var sevenDaysAgo = new Date(now);
+                sevenDaysAgo.setDate(now.getDate() - 7);   // 7일 전
+                console.log("7일 전 : ", sevenDaysAgo);
+                   
                 setData(fetchedData);
                 setMarkedDates(updatedMarkedDates);
             } catch (error) {

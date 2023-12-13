@@ -6,6 +6,7 @@ import { getDatabase, ref, set } from 'firebase/database';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import axios from 'axios';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
+//import { getStorage,getDownloadURL } from 'firebase/storage';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD7jlUzKiSs6oLOMptBnweP8XhrOuiUyZ8",
@@ -32,22 +33,82 @@ const HomeScreen = () => {
     const [forecastData, setForecastData] = useState([]);
 
     const [data, setData] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [best, setBest] = useState([]);
+    const [crop, setCrop] = useState([]);
+    const [loadingB, setLoadingB] = useState(true);
+    const [remain, setRemain] = useState([]);
+    const [loadingR, setLoadingR] = useState(true);
 
     useEffect(() => {
 
         async function fetchData() {
             try {
-                const q = query(collection(db, 'feedback'), where('comfortFeedback', '==', 'comfortable'));
+                const q = query(
+                    collection(db, 'feedback'),
+                    where('temperatureFeedback', '==', 'moderate'),
+                    where('comfortFeedback', '==', 'comfortable')
+                );
+
                 const querySnapshot = await getDocs(q);
 
-                const fetchedData = [];
-                querySnapshot.forEach((doc) => {
-                    fetchedData.push(doc.data());
-                });
-                setData(fetchedData);
-                setLoading(false);
+                const fetchedBest = [];
+                const fetchedRemain = [];
 
+                var now = new Date();   // 현재 날짜 및 시간
+                var sevenDaysAgo = new Date(now);
+                sevenDaysAgo.setDate(now.getDate() - 7);   // 7일 전
+                sevenDaysAgo.setHours(0, 0, 0, 0); // Set the time to midnight (0 am)
+
+                let isFirst = true;
+
+                querySnapshot.forEach((doc) => {
+
+                    const feedbackDate = doc.data().timestamp.toDate();
+                    if ((isFirst) && (feedbackDate < sevenDaysAgo)) {
+                        console.log(feedbackDate);
+
+                        fetchedBest.push(doc.data());
+
+                        isFirst = false;
+                    }
+                    else {
+                        fetchedRemain.push(doc.data());
+                    }
+                });
+                setBest(fetchedBest);
+                setLoadingB(false);
+                setRemain(fetchedRemain);
+                setLoadingR(false);
+                fetchCrop(best);
+
+            } catch (error) {
+                console.error('Error fetching data: ', error);
+            }
+        };
+
+        const fetchCrop = async (best) => {
+            try {
+                console.log(best);
+                const fetchedCrop = [];
+
+                const promises = best.map(async (item) => {
+                    const qq = query(
+                        collection(db, 'modelResult'),
+                        where('imgSrc', '==', item.downloadURL)
+                    );
+
+                    const querySnapshot = await getDocs(qq);
+
+                    querySnapshot.forEach((doc) => {
+                        fetchedCrop.push(doc.data());
+                    });
+                });
+
+                // Wait for all promises to resolve
+                await Promise.all(promises);
+
+                console.log(fetchedCrop.topURL);
+                setCrop(fetchedCrop);
 
             } catch (error) {
                 console.error('Error fetching data: ', error);
@@ -87,7 +148,7 @@ const HomeScreen = () => {
         const saveWeatherDataToFirebase = async (data) => {
             try {
                 await set(ref(database, 'weather'), data);
-                console.log('Weather data saved to Firebase:', data);
+                // console.log('Weather data saved to Firebase:', data);
             } catch (error) {
                 console.error('Error saving weather data to Firebase:', error);
             }
@@ -141,8 +202,10 @@ const HomeScreen = () => {
                 return 'cloud-bolt';
             case 'Drizzle':
                 return 'cloud-rain';
+            case 'Mist':
+                return 'cloud';
             default:
-                return 'smog';
+                return 'question';
         }
     };
 
@@ -192,10 +255,7 @@ const HomeScreen = () => {
     const getWeatherIcon_Forecast = (icon) => `http://openweathermap.org/img/wn/${icon}.png`;
 
 
-    const topImage = require('../assets/top-image.png'); // Replace with the actual path
-    const bottomImage = require('../assets/bottom-image.png'); // Replace with the actual path
-    const shoesImage = require('../assets/shoes-image.png'); // Replace with the actual path
-
+    
     const renderPreviousClothItem = (item, index) => (
         <View key={index} style={styles.previousClothItem}>
             <Image source={item.image} style={styles.previousClothImage} />
@@ -246,10 +306,30 @@ const HomeScreen = () => {
                 {/* Clothing images */}
                 <View style={styles.clothingContainer}>
                     <Text>Recommended clothes</Text>
-                    <View style={styles.clothingImagesContainer}>
-                        <Image source={topImage} style={styles.clothingImage} />
-                        <Image source={bottomImage} style={styles.clothingImage} />
-                        <Image source={shoesImage} style={styles.clothingImage} />
+                    <View>
+                        {loadingB ? (
+                            <Text>Loading...</Text>
+                        ) : (
+                            crop.map((item, index) => (
+                                <View style={styles.clothingImagesContainer} key={index} >
+                                    <Image
+                                        style={styles.clothingImage}
+                                        source={{ uri: item.topURL }} // Use source attribute for images in React Native
+                                        onError={(e) => console.log('Error loading image:', e.nativeEvent.error)}
+                                    />
+                                    <Image
+                                        style={styles.clothingImage}
+                                        source={{ uri: item.bottomURL }} // Use source attribute for images in React Native
+                                        onError={(e) => console.log('Error loading image:', e.nativeEvent.error)}
+                                    />
+                                    <Image
+                                        style={styles.clothingImage}
+                                        source={{ uri: item.shoeURL }} // Use source attribute for images in React Native
+                                        onError={(e) => console.log('Error loading image:', e.nativeEvent.error)}
+                                    />
+                                </View>
+                            ))
+                        )}
                     </View>
                 </View>
 
@@ -260,24 +340,19 @@ const HomeScreen = () => {
                         contentContainerStyle={styles.previousClothesScrollView}
                     >
 
-                        {loading ? (
+                        {loadingR ? (
                             <Text>Loading...</Text>
                         ) : (
-                                data.map((item, index) => (
-                                    <View key={index}>
-                                        
-                                            
-                                        <Image
-                                            style={styles.previousClothImage}
-                                            source={{ uri: item.downloadURL }} // Use source attribute for images in React Native
-                                        />
-                                        <Text style={styles.previousClothDate}>
-                                            {new Date(item.timestamp.toDate()).toLocaleDateString()}
-                                        </Text>
-                                        {/* <img style={styles.previousClothImage}
-                                    src={item.downloadURL} /> */}
-                                        {/* <Text style={styles.previousClothDate}>{item.downloadURL}</Text> */}
-                                    </View>
+                            remain.map((item, index) => (
+                                <View key={index}>
+                                    <Image
+                                        style={styles.previousClothImage}
+                                        source={{ uri: item.downloadURL }} // Use source attribute for images in React Native
+                                    />
+                                    <Text style={styles.previousClothDate}>
+                                        {new Date(item.timestamp.toDate()).toLocaleDateString()}
+                                    </Text>
+                                </View>
                             ))
                         )}
                     </ScrollView>
@@ -348,7 +423,7 @@ const styles = StyleSheet.create({
     clothingImage: {
         width: 90,
         height: 90,
-        resizeMode: 'cover',
+        resizeMode: 'recover',
         borderRadius: 8,
         marginRight: 5,
         marginLeft: 5,
@@ -385,7 +460,8 @@ const styles = StyleSheet.create({
         height: 190,
         resizeMode: 'cover',
         borderRadius: 8,
-        marginLeft: 10,
+        marginRight: 10,
+
     },
     previousClothDate: {
         textAlign: 'center',

@@ -1,41 +1,75 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+//import React from 'react';
+//import { View, Text, Image, StyleSheet } from 'react-native';
 import Swiper from 'react-native-swiper';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, Image, ScrollView } from 'react-native';
+import { initializeApp } from 'firebase/app';
+import { getDatabase } from 'firebase/database';
+import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyD7jlUzKiSs6oLOMptBnweP8XhrOuiUyZ8",
+    authDomain: "cloc-bdf74.firebaseapp.com",
+    databaseURL: "https://cloc-bdf74-default-rtdb.firebaseio.com/",
+    projectId: "cloc-bdf74",
+    storageBucket: "cloc-bdf74.appspot.com",
+    messagingSenderId: "485093561661",
+    appId: "1:485093561661:web:e4d4743dda2407b90f2154",
+    measurementId: "G-ZXG5FLMMFN"
+};
+
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
+const db = getFirestore(app);
 
 const ClosetScreen = () => {
 
-    /////// ���� �̹���
+    const [data, setData] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const topImages = [
-        require('../assets/top1.png'),
-        require('../assets/top2.png'),
-        require('../assets/top3.png'),
+    useEffect(() => {
 
-    ];
+        async function fetchData() {
+            try {
+                const q = query(
+                    collection(db, 'modelResult')
+                );
 
-    const bottomImages = [
-        require('../assets/bottom1.png'),
-        require('../assets/bottom2.png'),
-        require('../assets/bottom3.png'),
+                const querySnapshot = await getDocs(q);
 
-    ];
+                const fetchedData = [];
 
-    const shoeImages = [
-        require('../assets/shoes1.png'),
-        require('../assets/shoes2.png'),
-        require('../assets/shoes3.png'),
+                querySnapshot.forEach((doc) => {
+                    fetchedData.push(doc.data());
+                });
 
-    ];
+                console.log(fetchedData);
+                setData(fetchedData);
+                setLoading(false);
+
+            } catch (error) {
+                console.error('Error fetching data: ', error);
+            }
+        };
+
+        fetchData();
+
+    }, []);
+
 
 
     return (
         <View style={styles.container}>
             <View style={styles.swiperContainer}>
                 <Swiper style={styles.swiper} showsButtons={false} loop dotStyle={styles.dotStyle} activeDotStyle={styles.activeDotStyle}>
-                    {topImages.map((image, index) => (
+                    {data.map((item, index) => (
                         <View key={index} style={styles.slide}>
                             <View style={styles.imageContainerTop}>
-                                <Image source={image} style={styles.topImage} />
+                                <Image
+                                    style={styles.topImage}
+                                    source={{ uri: item.topURL }} // Use source attribute for images in React Native
+                                />
                             </View>
                         </View>
                     ))}
@@ -44,10 +78,13 @@ const ClosetScreen = () => {
 
             <View style={styles.swiperContainer}>
                 <Swiper style={styles.swiper} showsButtons={false} loop dotStyle={styles.dotStyle} activeDotStyle={styles.activeDotStyle}>
-                    {bottomImages.map((image, index) => (
+                    {data.map((item, index) => (
                         <View key={index} style={styles.slide}>
                             <View style={styles.imageContainerBottom}>
-                                <Image source={image} style={styles.bottomImage} />
+                                <Image
+                                    style={styles.bottomImage}
+                                    source={{ uri: item.bottomURL }} // Use source attribute for images in React Native
+                                />
                             </View>
                         </View>
                     ))}
@@ -56,10 +93,13 @@ const ClosetScreen = () => {
 
             <View style={styles.swiperContainer}>
                 <Swiper style={styles.swiper} showsButtons={false} loop dotStyle={styles.dotStyle} activeDotStyle={styles.activeDotStyle}>
-                    {shoeImages.map((image, index) => (
+                    {data.map((item, index) => (
                         <View key={index} style={styles.slide}>
                             <View style={styles.imageContainerShoe}>
-                                <Image source={image} style={styles.shoeImage} />
+                                <Image
+                                    style={styles.shoeImage}
+                                    source={{ uri: item.shoeURL }} // Use source attribute for images in React Native
+                                />
                             </View>
                         </View>
                     ))}
@@ -139,6 +179,7 @@ const styles = StyleSheet.create({
         margin: 5,
         backgroundColor: 'gray',
     },
+
 });
 
 
