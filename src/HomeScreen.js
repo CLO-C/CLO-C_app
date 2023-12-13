@@ -6,7 +6,6 @@ import { getDatabase, ref, set } from 'firebase/database';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import axios from 'axios';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
-//import { getStorage,getDownloadURL } from 'firebase/storage';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD7jlUzKiSs6oLOMptBnweP8XhrOuiUyZ8",
@@ -39,11 +38,7 @@ const HomeScreen = () => {
 
         async function fetchData() {
             try {
-
-                const q = query(
-                collection(db, 'feedback'),
-                where('comfortFeedback', '==', 'comfortable')
-            );
+                const q = query(collection(db, 'feedback'), where('comfortFeedback', '==', 'comfortable'));
                 const querySnapshot = await getDocs(q);
 
                 const fetchedData = [];
@@ -146,10 +141,8 @@ const HomeScreen = () => {
                 return 'cloud-bolt';
             case 'Drizzle':
                 return 'cloud-rain';
-            case 'Mist':
-                return 'cloud';
             default:
-                return 'question';
+                return 'smog';
         }
     };
 
@@ -270,22 +263,21 @@ const HomeScreen = () => {
                         {loading ? (
                             <Text>Loading...</Text>
                         ) : (
-                            data.map((item, index) => (
-                                <View key={index}>
-
-
-                                    <Image
-                                        style={styles.previousClothImage}
-                                        source={{ uri: item.downloadURL }} // Use source attribute for images in React Native
-                                    />
-                                    <Text style={styles.previousClothDate}>
-                                        {new Date(item.timestamp.toDate()).toLocaleDateString()}
-                                    </Text>
-
-                                    {/* <img style={styles.previousClothImage}
+                                data.map((item, index) => (
+                                    <View key={index}>
+                                        
+                                            
+                                        <Image
+                                            style={styles.previousClothImage}
+                                            source={{ uri: item.downloadURL }} // Use source attribute for images in React Native
+                                        />
+                                        <Text style={styles.previousClothDate}>
+                                            {new Date(item.timestamp.toDate()).toLocaleDateString()}
+                                        </Text>
+                                        {/* <img style={styles.previousClothImage}
                                     src={item.downloadURL} /> */}
-                                    {/* <Text style={styles.previousClothDate}>{item.downloadURL}</Text> */}
-                                </View>
+                                        {/* <Text style={styles.previousClothDate}>{item.downloadURL}</Text> */}
+                                    </View>
                             ))
                         )}
                     </ScrollView>
@@ -393,8 +385,7 @@ const styles = StyleSheet.create({
         height: 190,
         resizeMode: 'cover',
         borderRadius: 8,
-        marginRight: 10,
-
+        marginLeft: 10,
     },
     previousClothDate: {
         textAlign: 'center',

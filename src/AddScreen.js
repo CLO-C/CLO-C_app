@@ -97,7 +97,7 @@ export default function ImageUploadScreen() {
     }, []);
 
 
-    // ���������� ���� ����
+    // pick image from gallery
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -111,7 +111,7 @@ export default function ImageUploadScreen() {
         }
     };
 
-    // ī�޶�� ���
+    // take picture
     const takePicture = async () => {
         try {
             let result = await ImagePicker.launchCameraAsync({
@@ -138,7 +138,7 @@ export default function ImageUploadScreen() {
     };
 
 
-    // ���ε� -> ����: ���丮��, ������ ����: ���̾���
+    // picture: storage, others: firestore
     const uploadImage = async () => {
         try {
             if (!selectedImage || !temperatureFeedback || !comfortFeedback) {
@@ -174,7 +174,7 @@ export default function ImageUploadScreen() {
             );
             const weatherData = await weatherResponse.json();
 
-            // �ʿ��� ������ ���̾�� �ø���
+           
             const { coord, main, name, weather } = weatherData;
             const { lat, lon } = coord;
             const { feels_like, temp } = main;
