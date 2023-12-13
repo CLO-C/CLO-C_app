@@ -21,26 +21,14 @@ const db = getFirestore(app);
 const CalendarScreen = () => {
     const [selectedDate, setSelectedDate] = useState(null);
     const [data, setData] = useState([]);
+    //const [today, setToday] = useState('');
     const [markedDates, setMarkedDates] = useState({});
 
     useEffect(() => {
-        // Fetch data based on selected date
         async function fetchData() {
             try {
                 const updatedMarkedDates = {};
-
-                // Fetch data from Firebase
-                const startOfDay = new Date(selectedDate);
-                startOfDay.setHours(0, 0, 0, 0);
-
-                const endOfDay = new Date(startOfDay);
-                endOfDay.setDate(endOfDay.getDate() + 1);
-                endOfDay.setHours(0, 0, 0, 0);
-
-                const q = query(
-                    collection(db, 'feedback')
-                );
-
+                const q = query(collection(db, 'feedback'));
                 const querySnapshot = await getDocs(q);
 
                 const fetchedData = [];
@@ -51,8 +39,6 @@ const CalendarScreen = () => {
                 });
 
                 setData(fetchedData);
-
-                // Set markedDates state
                 setMarkedDates(updatedMarkedDates);
             } catch (error) {
                 console.error('Error fetching data: ', error);
@@ -65,15 +51,17 @@ const CalendarScreen = () => {
     useEffect(() => {
         const updatedMarkedDates = {};
 
-        // Mark all dates with gray dots
         data.forEach((item) => {
             const date = item.timestamp.toDate().toISOString().split('T')[0];
             updatedMarkedDates[date] = { marked: true, dotColor: 'gray' };
         });
 
-        // Add the selected day with a sky blue circle
         if (selectedDate) {
-            updatedMarkedDates[selectedDate] = { ...updatedMarkedDates[selectedDate], selected: true, selectedColor: 'skyblue' };
+            updatedMarkedDates[selectedDate] = {
+                ...updatedMarkedDates[selectedDate],
+                selected: true,
+                selectedColor: 'skyblue',
+            };
         }
 
         setMarkedDates(updatedMarkedDates);
@@ -82,21 +70,22 @@ const CalendarScreen = () => {
     const handleDayClick = (day) => {
         setSelectedDate(day.dateString);
     };
+    const filteredData = data.filter(
+        (item) => item.timestamp.toDate().toISOString().split('T')[0] === selectedDate
+    );
+
 
     return (
         <View style={{ flex: 1 }}>
             <View style={{ height: 300 }}>
-                <Calendar
-                    onDayPress={handleDayClick}
-                    markedDates={markedDates}
-                />
+                <Calendar onDayPress={handleDayClick} markedDates={markedDates} />
             </View>
 
             <View style={styles.containerWithImages}>
-                {data.length === 0 ? (
+                {filteredData.length === 0 ? (
                     <Text style={styles.noPhotoText}>No photo for the selected date</Text>
                 ) : (
-                    data.map((item, index) => (
+                    filteredData.map((item, index) => (
                         <ImageItem key={index} item={item} />
                     ))
                 )}
